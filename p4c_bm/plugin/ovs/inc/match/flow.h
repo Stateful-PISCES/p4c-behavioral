@@ -22,6 +22,17 @@
 #ifndef OVS_MATCH_FLOW_H
 #define	OVS_MATCH_FLOW_H 1
 
+//::  import math
+//::
+//::  def byte_array_to_int(bytes):
+//::    res = 0
+//::    len_ = len(bytes)
+//::    for i in xrange(len_):
+//::      res += bytes[len_-1-i] << (8 * i)
+//::    #endfor
+//::    return res
+//::  #enddef
+//::
 /* -- Called in lib/flow.h -- */
 #define OVS_FIELDS \
 //::  for header_name in ordered_header_instances_non_virtual:
