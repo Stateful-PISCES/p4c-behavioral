@@ -132,8 +132,8 @@ def main():
                                            args.public_inc_path,
                                            dump_yaml = args.dump_yaml)
 
-    # Dumps the render dict for flow type checker
-    pickle.dump(render_dict, open(gen_dir + "/parse_dict.p","wb"))
+    # @OVS: dumps the render dict for flow_type_checker.py
+    pickle.dump(render_dict, open(gen_dir+"/dict.pickle", "wb"))
 
     if args.openflow_mapping_dir and args.openflow_mapping_mod:
         sys.path.append(args.openflow_mapping_dir)
