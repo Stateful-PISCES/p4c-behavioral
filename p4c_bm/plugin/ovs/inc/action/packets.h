@@ -42,6 +42,22 @@
     \
 
 /* -- Called in lib/packets.c -- */
+#define OVS_DEPARSE_SHIFT_PAYLOAD \
+//::  if not OPT_INLINE_EDITING:
+    if (packet->payload_ofs != new_payload_ofs) { \
+        if (dp_packet_get_allocated(packet) >= (new_payload_ofs + (dp_packet_size(packet) - packet->payload_ofs))) { \
+            memmove(data + new_payload_ofs, data + packet->payload_ofs, dp_packet_size(packet) - packet->payload_ofs); \
+        } \
+        else { /* error */ } \
+        \
+        dp_packet_set_size(packet, dp_packet_size(packet) + (new_payload_ofs - packet->payload_ofs)); \
+        packet->payload_ofs = new_payload_ofs; \
+    } \
+//::  #endif
+    \
+
+
+/* -- Called in lib/packets.c -- */
 #define OVS_DEPARSE_WRITE_HEADERS \
 //::  for header_name in ordered_header_instances_regular:
 //::    if not OPT_INLINE_EDITING:
