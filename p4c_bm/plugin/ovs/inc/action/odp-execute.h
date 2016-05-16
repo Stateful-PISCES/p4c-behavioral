@@ -158,9 +158,10 @@
 //::  #endfor
 //    \
 
+//::  if OPT_INLINE_EDITING:
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_ADD_HEADER_GET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (OVS_KEY_ATTR__${header_name.upper()} == key) { \
 		header_size = sizeof(struct _${header_name}_header); \
 		packet->_${header_name}_valid = 1; \
@@ -170,11 +171,11 @@
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
+//::    #endfor
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_REMOVE_HEADER_GET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (OVS_KEY_ATTR__${header_name.upper()} == key) { \
 		header_size = sizeof(struct _${header_name}_header); \
 		packet->_${header_name}_valid = 0; \
@@ -184,16 +185,99 @@
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
+//::    #endfor
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (packet->_${header_name}_valid) { \
 		packet->_${header_name}_ofs = header_ofs; \
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
+//::    #endfor
+//::  #endif
+
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_ADD_HEADER \
+//::  if OPT_INLINE_EDITING:
+    char *data = dp_packet_data(packet); \
+    \
+    /* get header offset */ \
+	uint16_t header_ofs = 0; \
+    uint16_t header_size = 0; \
+    \
+    OVS_ODP_EXECUTE_ADD_HEADER_GET_OFS \
+    \
+	OVS_NOT_REACHED(); \
+    \
+	/* push header */ \
+push: \
+	if (dp_packet_get_allocated(packet) >= (dp_packet_size(packet) + header_size)) { \
+		memmove(data + header_ofs + header_size, data + header_ofs, dp_packet_size(packet) - header_ofs); \
+		dp_packet_set_size(packet, dp_packet_size(packet) + header_size); \
+	} \
+	else { /* error */ \
+		OVS_NOT_REACHED(); \
+	} \
+    \
+	header_ofs = 0; \
+    \
+	/* set header offsets */ \
+	OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
+//::  else:
+    switch(key) { \
+//::    for header_name in ordered_header_instances_regular:
+        case OVS_KEY_ATTR__${header_name.upper()}: \
+            packet->_${header_name}_valid = 1; \
+            break; \
+//::    #endfor
+        case __OVS_KEY_ATTR_MAX: \
+        default: \
+            OVS_NOT_REACHED(); \
+    } \
+//::  #endif
+    \
+
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_REMOVE_HEADER \
+//::  if OPT_INLINE_EDITING:
+    char *data = dp_packet_data(packet); \
+    \
+    /* get header offset */ \
+	uint16_t header_ofs = 0; \
+    uint16_t header_size = 0; \
+    \
+    OVS_ODP_EXECUTE_REMOVE_HEADER_GET_OFS \
+    \
+	OVS_NOT_REACHED(); \
+    \
+	/* push header */ \
+pop: \
+	if (dp_packet_get_allocated(packet) >= (dp_packet_size(packet) - header_size)) { \
+		memmove(data + header_ofs, data + header_ofs + header_size, dp_packet_size(packet) - header_ofs - header_size); \
+		dp_packet_set_size(packet, dp_packet_size(packet) - header_size); \
+	} \
+	else { /* error */ \
+		OVS_NOT_REACHED(); \
+	} \
+    \
+	header_ofs = 0; \
+    \
+	/* set header offsets */ \
+	OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
+//::  else:
+    switch(key) { \
+//::    for header_name in ordered_header_instances_regular:
+        case OVS_KEY_ATTR__${header_name.upper()}: \
+            packet->_${header_name}_valid = 0; \
+            break; \
+//::    #endfor
+        case __OVS_KEY_ATTR_MAX: \
+        default: \
+            OVS_NOT_REACHED(); \
+    } \
+//::  #endif
+    \
 
 #endif	/* OVS_ACTION_ODP_EXECUTE_H */
