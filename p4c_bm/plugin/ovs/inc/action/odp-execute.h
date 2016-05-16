@@ -39,13 +39,16 @@
 //::  for header_name in ordered_header_instances_regular:
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
-        /*memcpy(buf, &packet->_${header_name}.${field_name}, sizeof packet->_${header_name}.${field_name});*/ \
-        /*buf += sizeof packet->_${header_name}.${field_name};*/ \
+//::      if not OPT_INLINE_EDITING:
+        memcpy(buf, &packet->_${header_name}.${field_name}, sizeof packet->_${header_name}.${field_name}); \
+        buf += sizeof packet->_${header_name}.${field_name}; \
+//::      else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			memcpy(buf, &_${header_name}->${field_name}, sizeof _${header_name}->${field_name}); \
 			buf += sizeof _${header_name}->${field_name}; \
 		} \
+//::      #endif
         break; \
 //::    #endfor
 //::  #endfor
@@ -58,11 +61,14 @@
 //::      if bit_width == 16:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
 //::        # @Shahbaz: revert this ... temporarily commented because of some issue in pkt reception.
-        /*return true; /*(packet->_${header_name}.${field_name} == res16);*/ \
+//::        if not OPT_INLINE_EDITING:
+        return true; /*(packet->_${header_name}.${field_name} == res16);*/ \
+//::        else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			return true; /*(_${header_name}->${field_name} == res16);*/ \
 		} \
+//::        #endif
 //::      else:
 //::        pass  # TODO: handle other cases (for different bit sizes).
 //::      #endif
@@ -76,11 +82,14 @@
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
 //::      if bit_width == 16:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
-        /*packet->_${header_name}.${field_name} = res16;*/ \
+//::        if not OPT_INLINE_EDITING:
+        packet->_${header_name}.${field_name} = res16; \
+//::        else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			_${header_name}->${field_name} = res16; \
 		} \
+//::        #endif
         break; \
 //::      else:
 //::        pass  # TODO: handle other cases (for different bit sizes).
@@ -149,9 +158,10 @@
 //::  #endfor
 //    \
 
+//::  if OPT_INLINE_EDITING:
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_ADD_HEADER_GET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (OVS_KEY_ATTR__${header_name.upper()} == key) { \
 		header_size = sizeof(struct _${header_name}_header); \
 		packet->_${header_name}_valid = 1; \
@@ -161,12 +171,11 @@
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
-	\
+//::    #endfor
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_REMOVE_HEADER_GET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (OVS_KEY_ATTR__${header_name.upper()} == key) { \
 		header_size = sizeof(struct _${header_name}_header); \
 		packet->_${header_name}_valid = 0; \
@@ -176,19 +185,99 @@
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
-	\
+//::    #endfor
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
-//::  for header_name in ordered_header_instances_regular:
+//::    for header_name in ordered_header_instances_regular:
 	if (packet->_${header_name}_valid) { \
 		packet->_${header_name}_ofs = header_ofs; \
 		header_ofs += sizeof(struct _${header_name}_header); \
 	} \
 	\
-//::  #endfor
-	\
+//::    #endfor
+//::  #endif
 
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_ADD_HEADER \
+//::  if OPT_INLINE_EDITING:
+    char *data = dp_packet_data(packet); \
+    \
+    /* get header offset */ \
+	uint16_t header_ofs = 0; \
+    uint16_t header_size = 0; \
+    \
+    OVS_ODP_EXECUTE_ADD_HEADER_GET_OFS \
+    \
+	OVS_NOT_REACHED(); \
+    \
+	/* push header */ \
+push: \
+	if (dp_packet_get_allocated(packet) >= (dp_packet_size(packet) + header_size)) { \
+		memmove(data + header_ofs + header_size, data + header_ofs, dp_packet_size(packet) - header_ofs); \
+		dp_packet_set_size(packet, dp_packet_size(packet) + header_size); \
+	} \
+	else { /* error */ \
+		OVS_NOT_REACHED(); \
+	} \
+    \
+	header_ofs = 0; \
+    \
+	/* set header offsets */ \
+	OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
+//::  else:
+    switch(key) { \
+//::    for header_name in ordered_header_instances_regular:
+        case OVS_KEY_ATTR__${header_name.upper()}: \
+            packet->_${header_name}_valid = 1; \
+            break; \
+//::    #endfor
+        case __OVS_KEY_ATTR_MAX: \
+        default: \
+            OVS_NOT_REACHED(); \
+    } \
+//::  #endif
+    \
+
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_REMOVE_HEADER \
+//::  if OPT_INLINE_EDITING:
+    char *data = dp_packet_data(packet); \
+    \
+    /* get header offset */ \
+	uint16_t header_ofs = 0; \
+    uint16_t header_size = 0; \
+    \
+    OVS_ODP_EXECUTE_REMOVE_HEADER_GET_OFS \
+    \
+	OVS_NOT_REACHED(); \
+    \
+	/* push header */ \
+pop: \
+	if (dp_packet_get_allocated(packet) >= (dp_packet_size(packet) - header_size)) { \
+		memmove(data + header_ofs, data + header_ofs + header_size, dp_packet_size(packet) - header_ofs - header_size); \
+		dp_packet_set_size(packet, dp_packet_size(packet) - header_size); \
+	} \
+	else { /* error */ \
+		OVS_NOT_REACHED(); \
+	} \
+    \
+	header_ofs = 0; \
+    \
+	/* set header offsets */ \
+	OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
+//::  else:
+    switch(key) { \
+//::    for header_name in ordered_header_instances_regular:
+        case OVS_KEY_ATTR__${header_name.upper()}: \
+            packet->_${header_name}_valid = 0; \
+            break; \
+//::    #endfor
+        case __OVS_KEY_ATTR_MAX: \
+        default: \
+            OVS_NOT_REACHED(); \
+    } \
+//::  #endif
+    \
 
 #endif	/* OVS_ACTION_ODP_EXECUTE_H */

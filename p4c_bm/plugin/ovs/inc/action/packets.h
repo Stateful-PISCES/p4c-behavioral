@@ -33,23 +33,41 @@
 /* -- Called in lib/packets.c -- */
 #define OVS_DEPARSE_NEW_PAYLOAD_OFS \
 //::  for header_name in ordered_header_instances_regular:
-//    if (packet->_${header_name}_valid) { \
-//        new_payload_ofs += sizeof(struct _${header_name}_header); \
-//    } \
-//	\
+//::    if not OPT_INLINE_EDITING:
+    if (packet->_${header_name}_valid) { \
+        new_payload_ofs += sizeof(struct _${header_name}_header); \
+    } \
+//::    #endif
 //::  #endfor
     \
 
 /* -- Called in lib/packets.c -- */
+#define OVS_DEPARSE_SHIFT_PAYLOAD \
+//::  if not OPT_INLINE_EDITING:
+    if (packet->payload_ofs != new_payload_ofs) { \
+        if (dp_packet_get_allocated(packet) >= (new_payload_ofs + (dp_packet_size(packet) - packet->payload_ofs))) { \
+            memmove(data + new_payload_ofs, data + packet->payload_ofs, dp_packet_size(packet) - packet->payload_ofs); \
+        } \
+        else { /* error */ } \
+        \
+        dp_packet_set_size(packet, dp_packet_size(packet) + (new_payload_ofs - packet->payload_ofs)); \
+        packet->payload_ofs = new_payload_ofs; \
+    } \
+//::  #endif
+    \
+
+
+/* -- Called in lib/packets.c -- */
 #define OVS_DEPARSE_WRITE_HEADERS \
 //::  for header_name in ordered_header_instances_regular:
-//    if (packet->_${header_name}_valid) { \
-//        memcpy(data + run_ofs, &packet->_${header_name}, sizeof(struct _${header_name}_header)); \
-//        packet->_${header_name}_ofs = run_ofs; \
-//        \
-//        run_ofs += sizeof(struct _${header_name}_header); \
-//    } \
-//	\
+//::    if not OPT_INLINE_EDITING:
+    if (packet->_${header_name}_valid) { \
+        memcpy(data + run_ofs, &packet->_${header_name}, sizeof(struct _${header_name}_header)); \
+        packet->_${header_name}_ofs = run_ofs; \
+        \
+        run_ofs += sizeof(struct _${header_name}_header); \
+    } \
+//::    #endif
 //::  #endfor
     \
 

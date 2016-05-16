@@ -135,6 +135,11 @@ def main():
     # @OVS: dumps the render dict for flow_type_checker.py
     pickle.dump(render_dict, open(gen_dir+"/dict.pickle", "wb"))
 
+    # @OVS: optimizer configurations
+    # @Shahbaz: enumerate number of adjustment actions and based on that
+    # set this to true or false.
+    render_dict["OPT_INLINE_EDITING"] = True
+
     if args.openflow_mapping_dir and args.openflow_mapping_mod:
         sys.path.append(args.openflow_mapping_dir)
         render_dict['openflow_mapping_mod'] = args.openflow_mapping_mod
