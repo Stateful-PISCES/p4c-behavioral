@@ -90,8 +90,10 @@
     miniflow_push_bytes__word_aligned(mf, _${header_name}, _${header_name}, sizeof(struct _${header_name}_header), \
         sizeof(struct _${header_name}_padded_header) / sizeof(uint64_t)); \
 	valid.hdr._${header_name}_valid = 1; \
-    /* packet->_${header_name} = *(struct _${header_name}_header *) _${header_name}; */ \
-    /* packet->_${header_name}_valid = 1;*/  \
+//::          if not OPT_INLINE_EDITING:
+    packet->_${header_name} = *(struct _${header_name}_header *) _${header_name}; \
+    packet->_${header_name}_valid = 1; \
+//::          #endif
     \
 //::        elif type == "set":
 //::          destination = call[1]
@@ -148,25 +150,57 @@
 //::            if header_name in ordered_header_instances_regular:
 //::              if aligned_field_mask:
 //::                if aligned_field_bit_width == 8:
+//::                  if OPT_INLINE_EDITING:
     uint8_t value_${call_id} = (_${header_name}->hdr.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  else:
+    uint8_t value_${call_id} = (packet->_${header_name}.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  #endif
 //::                elif aligned_field_bit_width == 16:
+//::                  if OPT_INLINE_EDITING:
     uint16_t value_${call_id} = (ntohs(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  else:
+    uint16_t value_${call_id} = (ntohs(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  #endif
 //::                elif aligned_field_bit_width == 32:
+//::                  if OPT_INLINE_EDITING:
     uint32_t value_${call_id} = (ntohl(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  else:
+    uint32_t value_${call_id} = (ntohl(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  #endif
 //::                elif aligned_field_bit_width == 64:
+//::                  if OPT_INLINE_EDITING:
     uint64_t value_${call_id} = (ntohll(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  else:
+    uint64_t value_${call_id} = (ntohll(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}; \
+//::                  #endif
 //::                else:
 //::                  assert(False)  # TODO: handle this case (for arbitrary byte combinations).
 //::                #endif
 //::              else:
 //::                if aligned_field_bit_width == 8:
+//::                  if OPT_INLINE_EDITING:
     uint8_t value_${call_id} = _${header_name}->hdr.${aligned_field_name}; \
+//::                  else:
+    uint8_t value_${call_id} = packet->_${header_name}.${aligned_field_name}; \
+//::                  #endif
 //::                elif aligned_field_bit_width == 16:
+//::                  if OPT_INLINE_EDITING:
     uint16_t value_${call_id} = ntohs(_${header_name}->hdr.${aligned_field_name}); \
+//::                  else:
+    uint16_t value_${call_id} = ntohs(packet->_${header_name}.${aligned_field_name}); \
+//::                  #endif
 //::                elif aligned_field_bit_width == 32:
+//::                  if OPT_INLINE_EDITING:
     uint32_t value_${call_id} = ntohl(_${header_name}->hdr.${aligned_field_name}); \
+//::                  else:
+    uint32_t value_${call_id} = ntohl(packet->_${header_name}.${aligned_field_name}); \
+//::                  #endif
 //::                elif aligned_field_bit_width == 64:
+//::                  if OPT_INLINE_EDITING:
     uint64_t value_${call_id} = ntohll(_${header_name}->hdr.${aligned_field_name}); \
+//::                  else:
+    uint64_t value_${call_id} = ntohll(packet->_${header_name}.${aligned_field_name}); \
+//::                  #endif
 //::                else:
 //::                  assert(False)  # TODO: handle this case (for arbitrary byte combinations).
 //::                #endif
@@ -262,37 +296,77 @@
 //::              if header_name in ordered_header_instances_regular:
 //::                if aligned_field_bit_width == 8:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((_${header_name}->hdr.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((packet->_${header_name}.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (_${header_name}->hdr.${aligned_field_name} == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (packet->_${header_name}.${aligned_field_name} == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 16:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((ntohs(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((ntohs(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohs(_${header_name}->hdr.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohs(packet->_${header_name}.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 32:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((ntohl(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((ntohl(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohl(_${header_name}->hdr.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohl(packet->_${header_name}.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+4]))}); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 64:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((nothll(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+8]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((nothll(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == ${hex(byte_array_to_int(case_value[key_id:key_id+8]))}); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohll(_${header_name}->hdr.${field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+8]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohll(packet->_${header_name}.${field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+8]))}); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 8
 //::                elif aligned_field_bit_width <= 64:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = ((be${aligned_field_bit_width}_to_u64((const uint8_t *) &_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr} == ${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = ((be${aligned_field_bit_width}_to_u64((const uint8_t *) &packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr} == ${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))}); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (be${aligned_field_bit_width}_to_u64((const uint8_t *) &_${header_name}->hdr.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))}); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (be${aligned_field_bit_width}_to_u64((const uint8_t *) &packet->_${header_name}.${aligned_field_name}) == ${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))}); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += aligned_field_bit_width/8
 //::                else:
@@ -406,37 +480,77 @@
 //::              if header_name in ordered_header_instances_regular:
 //::                if aligned_field_bit_width == 8:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((_${header_name}->hdr.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((packet->_${header_name}.${aligned_field_name} & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (_${header_name}->hdr.${aligned_field_name} == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (packet->_${header_name}.${aligned_field_name} == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 16:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((ntohs(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((ntohs(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohs(_${header_name}->hdr.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohs(packet->_${header_name}.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 32:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((ntohl(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((ntohl(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohl(_${header_name}->hdr.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohl(packet->_${header_name}.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+4]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+4]))})); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 4
 //::                elif aligned_field_bit_width == 64:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (((nothll(_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+8]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+8]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (((nothll(packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr}) == (${hex(byte_array_to_int(case_value[key_id:key_id+8]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+8]))})); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (ntohll(_${header_name}->hdr.${field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+8]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+8]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (ntohll(packet->_${header_name}.${field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+8]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+8]))})); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += 8
 //::                elif aligned_field_bit_width <= 64:
 //::                  if aligned_field_mask:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = ((be${aligned_field_bit_width}_to_u64((const uint8_t *) &_${header_name}->hdr.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr} == (${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+(aligned_field_bit_width/8)]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = ((be${aligned_field_bit_width}_to_u64((const uint8_t *) &packet->_${header_name}.${aligned_field_name}) & ${hex(aligned_field_mask)}) >> ${aligned_field_bit_offset_hdr} == (${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+(aligned_field_bit_width/8)]))})); \
+//::                    #endif
 //::                  else:
+//::                    if OPT_INLINE_EDITING:
     bool check_${case_id}_${branch_id} = (be${aligned_field_bit_width}_to_u64((const uint8_t *) &_${header_name}->hdr.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+(aligned_field_bit_width/8)]))})); \
+//::                    else:
+    bool check_${case_id}_${branch_id} = (be${aligned_field_bit_width}_to_u64((const uint8_t *) &packet->_${header_name}.${aligned_field_name}) == (${hex(byte_array_to_int(case_value[key_id:key_id+(aligned_field_bit_width/8)]))} & ${hex(byte_array_to_int(case_mask[key_id:key_id+(aligned_field_bit_width/8)]))})); \
+//::                    #endif
 //::                  #endif
 //::                  key_id += aligned_field_bit_width/8
 //::                else:
@@ -557,18 +671,20 @@
 
 //::  #endfor
 #define OVS_MINIFLOW_OUT \
-    /* packet->payload_ofs = (char *)data - l2; */ \
+//::  if not OPT_INLINE_EDITING:
+    packet->payload_ofs = (char *)data - l2; \
+//::  #endif
     \
-//:: for header_name in ordered_header_instances_metadata:
-//::   if header_name == "standard_metadata":
-//::     continue
-//::   #endif
+//::  for header_name in ordered_header_instances_metadata:
+//::    if header_name == "standard_metadata":
+//::      continue
+//::    #endif
     if (OVS_LIKELY(is__${header_name}_header_touched)) \
     { \
     	miniflow_push_bytes__word_aligned(mf, _${header_name}, &_${header_name}, sizeof(struct _${header_name}_header), \
             sizeof(struct _${header_name}_padded_header) / sizeof(uint64_t)); \
     } \
-//:: #endfor
+//::  #endfor
     \
 	miniflow_push_bytes__word_aligned(mf, valid, &valid, sizeof(struct valid_header), \
             sizeof(struct valid_padded_header) / sizeof(uint64_t)); \

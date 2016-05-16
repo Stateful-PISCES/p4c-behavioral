@@ -29,7 +29,11 @@
     odp_set__${header_name}(struct dp_packet *packet, const struct ovs_key__${header_name} *key, \
             const struct ovs_key__${header_name} *mask) \
     { \
-        struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); /*&packet->_${header_name};*/ \
+//::    if OPT_INLINE_EDITING:
+        struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
+//::    else:
+        struct _${header_name}_header *_${header_name} = &packet->_${header_name}; \
+//::    #endif
         \
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
 //::      if bit_width == 8:

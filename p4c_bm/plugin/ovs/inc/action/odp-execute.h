@@ -39,13 +39,16 @@
 //::  for header_name in ordered_header_instances_regular:
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
-        /*memcpy(buf, &packet->_${header_name}.${field_name}, sizeof packet->_${header_name}.${field_name});*/ \
-        /*buf += sizeof packet->_${header_name}.${field_name};*/ \
+//::      if not OPT_INLINE_EDITING:
+        memcpy(buf, &packet->_${header_name}.${field_name}, sizeof packet->_${header_name}.${field_name}); \
+        buf += sizeof packet->_${header_name}.${field_name}; \
+//::      else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			memcpy(buf, &_${header_name}->${field_name}, sizeof _${header_name}->${field_name}); \
 			buf += sizeof _${header_name}->${field_name}; \
 		} \
+//::      #endif
         break; \
 //::    #endfor
 //::  #endfor
@@ -58,11 +61,14 @@
 //::      if bit_width == 16:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
 //::        # @Shahbaz: revert this ... temporarily commented because of some issue in pkt reception.
-        /*return true; /*(packet->_${header_name}.${field_name} == res16);*/ \
+//::        if not OPT_INLINE_EDITING:
+        return true; /*(packet->_${header_name}.${field_name} == res16);*/ \
+//::        else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			return true; /*(_${header_name}->${field_name} == res16);*/ \
 		} \
+//::        #endif
 //::      else:
 //::        pass  # TODO: handle other cases (for different bit sizes).
 //::      #endif
@@ -76,11 +82,14 @@
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
 //::      if bit_width == 16:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
-        /*packet->_${header_name}.${field_name} = res16;*/ \
+//::        if not OPT_INLINE_EDITING:
+        packet->_${header_name}.${field_name} = res16; \
+//::        else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
 			_${header_name}->${field_name} = res16; \
 		} \
+//::        #endif
         break; \
 //::      else:
 //::        pass  # TODO: handle other cases (for different bit sizes).
@@ -162,7 +171,6 @@
 	} \
 	\
 //::  #endfor
-	\
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_REMOVE_HEADER_GET_OFS \
@@ -177,7 +185,6 @@
 	} \
 	\
 //::  #endfor
-	\
 
 /* -- Called in lib/odp-execute.c -- */
 #define OVS_ODP_EXECUTE_ADD_REMOVE_HEADER_SET_OFS \
@@ -188,7 +195,5 @@
 	} \
 	\
 //::  #endfor
-	\
-
 
 #endif	/* OVS_ACTION_ODP_EXECUTE_H */
