@@ -60,8 +60,6 @@ def get_parser():
                         help="list of plugins to generate templates")
     parser.add_argument('--openflow-mapping-dir', help="Directory of openflow mapping files")
     parser.add_argument('--openflow-mapping-mod', help="Openflow mapping module name -- not a file name")
-    parser.add_argument('--opt-inline-editing', dest='opt_inline_editing', action='store_true', default=False,
-                        help="Enable inline editing mode")
     return parser
 
 def _get_p4_basename(p4_source):
@@ -140,7 +138,7 @@ def main():
     # @OVS: optimizer configurations
     # @Shahbaz: enumerate number of adjustment actions and based on that
     # set this to true or false.
-    render_dict["OPT_INLINE_EDITING"] = args.opt_inline_editing
+    render_dict["OPT_INLINE_EDITING"] = False
 
     if args.openflow_mapping_dir and args.openflow_mapping_mod:
         sys.path.append(args.openflow_mapping_dir)
