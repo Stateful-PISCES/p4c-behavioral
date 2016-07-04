@@ -56,7 +56,6 @@
 //::  #endif
     \
 
-
 /* -- Called in lib/packets.c -- */
 #define OVS_DEPARSE_WRITE_HEADERS \
 //::  for header_name in ordered_header_instances_regular:
