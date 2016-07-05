@@ -1187,6 +1187,30 @@ def render_dict_ordered_field_and_header_instances__name_width(render_dict):
             render_dict["ordered_header_instances_non_virtual_field__name_width"][header_name] += [(field_name,
                                                                                                     bit_width)]
 
+# @OVS:
+def render_dict_incremental_header_checksums(render_dict):
+    render_dict["incremental_header_checksums"] = {}
+
+    for field_name in render_dict["calculated_fields_update"]:
+        if render_dict["calculated_fields_update"][field_name]:
+            header_name = render_dict["field_info"][field_name]["parent_header"]
+            if header_name in render_dict["incremental_header_checksums"]:
+                # TODO: for now we only support one checksum per header.
+                break
+
+            render_dict["incremental_header_checksums"][header_name] = {}
+            render_dict["incremental_header_checksums"][header_name]["field_name"] = field_name
+            render_dict["incremental_header_checksums"][header_name]["field_list"] = []
+
+            for field_list_calculation_name, _ in render_dict["calculated_fields_update"][field_name]:
+                for field_list_name in render_dict["field_list_calculations"][field_list_calculation_name]["input"]:
+                    for _, field_name_ in render_dict["field_lists"][field_list_name]:
+                        render_dict["incremental_header_checksums"][header_name]["field_list"].append(field_name_)
+                    # TODO: for now we only support one field list per header.
+                    break
+                # TODO: for now we only support one checksum per calculated field.
+                break
+
 def get_type(byte_width):
     if byte_width == 1:
         return "uint8_t"
@@ -1248,6 +1272,7 @@ def render_dict_create(hlir,
     # @OVS:
     render_dict_align_fields(render_dict)
     render_dict_ordered_field_and_header_instances__name_width(render_dict)
+    render_dict_incremental_header_checksums(render_dict)
 
     if hlir.p4_egress_ptr:
         render_dict["egress_entry_table"] = get_table_name(hlir.p4_egress_ptr)

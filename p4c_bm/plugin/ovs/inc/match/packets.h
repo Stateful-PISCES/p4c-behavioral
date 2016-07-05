@@ -147,6 +147,43 @@
         struct _${header_name}_header *_${header_name} = &packet->_${header_name}; \
 //::    #endif
         \
+//::    if OPT_INCREMENTAL_CHECKSUM:
+//::      # TODO: we assume that field_list consists of fields from a same header and each header only has one checksum.
+//::      if header_name in incremental_header_checksums:
+//::        csum_field_name = incremental_header_checksums[header_name]["field_name"]
+        ovs_be16 new_csum = _${header_name}->${csum_field_name}; \
+//::        field_names_ = []
+//::        for field_name_ in incremental_header_checksums[header_name]["field_list"]:
+//::          if aligned_field_info[field_name_]["name"] in field_names_:
+//::            continue
+//::          #endif
+//::          field_name = aligned_field_info[field_name_]["name"]
+//::          field_names_.append(aligned_field_info[field_name_]["name"])
+//::          bit_width = aligned_field_info[field_name_]["bit_width"]
+//::          if bit_width == 8:
+        if (offsetof(struct _${header_name}_header, ${field_name}) % 2 == 0) \
+            new_csum = recalc_csum16(new_csum, htons(_${header_name}->${field_name} << 8), htons(${field_name} << 8)); \
+        else \
+            new_csum = recalc_csum16(new_csum, htons((uint16_t) _${header_name}->${field_name}), htons((uint16_t) ${field_name})); \
+//::          elif bit_width == 16:
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name}, ${field_name}); \
+//::          elif bit_width == 32:
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name}, ${field_name}); \
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name} >> 16, ${field_name} >> 16); \
+//::          elif bit_width == 32:
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name}, ${field_name}); \
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name} >> 16, ${field_name} >> 16); \
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name} >> 32, ${field_name} >> 32); \
+        new_csum = recalc_csum16(new_csum, _${header_name}->${field_name} >> 48, ${field_name} >> 48); \
+//::          else:
+//::            # TODO: handle this case (for arbitrary byte combinations).
+        \
+//::          #endif
+//::        #endfor
+        _${header_name}->${csum_field_name} = new_csum; \
+//::      #endif
+        \
+//::    #endif
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
         _${header_name}->${field_name} = ${field_name}; \
 //::    #endfor

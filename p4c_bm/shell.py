@@ -139,6 +139,7 @@ def main():
     # @Shahbaz: enumerate number of adjustment actions and based on that
     # set this to true or false.
     render_dict["OPT_INLINE_EDITING"] = False
+    render_dict["OPT_INCREMENTAL_CHECKSUM"] = True
 
     if args.openflow_mapping_dir and args.openflow_mapping_mod:
         sys.path.append(args.openflow_mapping_dir)
