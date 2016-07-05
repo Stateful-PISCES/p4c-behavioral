@@ -60,13 +60,12 @@
 //::    for field_name, bit_width in ordered_header_instances_non_virtual_field__name_width[header_name]:
 //::      if bit_width == 16:
     case OVS_CALC_FIELD_ATTR_${field_name.upper()}: \
-//::        # @Shahbaz: revert this ... temporarily commented because of some issue in pkt reception.
 //::        if not OPT_INLINE_EDITING:
-        return true; /*(packet->_${header_name}.${field_name} == res16);*/ \
+        return (packet->_${header_name}.${field_name} == res16); \
 //::        else:
 		{ \
 			struct _${header_name}_header *_${header_name} = dp_packet_${header_name}(packet); \
-			return true; /*(_${header_name}->${field_name} == res16);*/ \
+			return (_${header_name}->${field_name} == res16); \
 		} \
 //::        #endif
 //::      else:
