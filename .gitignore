@@ -71,4 +71,4 @@ build/*
 *.cache
 
 .idea/
-test/
+test/output/
