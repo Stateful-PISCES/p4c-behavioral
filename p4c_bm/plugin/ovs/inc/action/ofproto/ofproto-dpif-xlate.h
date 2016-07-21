@@ -122,7 +122,7 @@
 		memset(&wc->masks._${header_name}.hdr.${field_name}, 0xff, sizeof value->be64); \
 		apply_mask((const uint8_t *) value, (const uint8_t *) mask, \
 			(uint8_t *) &tmp, sizeof value->be64); \
-		tmp.be64 = htonll(ntohll(flow->${header_name}.hdr.${field_name}) + ntohll(tmp.be64)); \
+		tmp.be64 = htonll(ntohll(flow->_${header_name}.hdr.${field_name}) + ntohll(tmp.be64)); \
 		apply_mask((const uint8_t *) &tmp, (const uint8_t *) mask, \
 			(uint8_t *) &flow->_${header_name}.hdr.${field_name}, sizeof value->be64); \
 //::      else:
@@ -164,7 +164,7 @@
 		memset(&wc->masks._${header_name}.hdr.${field_name}, 0xff, sizeof value->be64); \
 		apply_mask((const uint8_t *) value, (const uint8_t *) mask, \
 			(uint8_t *) &tmp, sizeof value->be64); \
-		tmp.be64 = htonll(ntohll(flow->${header_name}.hdr.${field_name}) - ntohll(tmp.be64)); \
+		tmp.be64 = htonll(ntohll(flow->_${header_name}.hdr.${field_name}) - ntohll(tmp.be64)); \
 		apply_mask((const uint8_t *) &tmp, (const uint8_t *) mask, \
 			(uint8_t *) &flow->_${header_name}.hdr.${field_name}, sizeof value->be64); \
 //::      else:
