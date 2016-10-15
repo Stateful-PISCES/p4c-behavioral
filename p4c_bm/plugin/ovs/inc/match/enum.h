@@ -46,7 +46,7 @@
      * Prerequisites: none.
      * Access: read/write.
      * NXM: none.
-     * OXM: OXM_OF_${field_name.upper()}(${base_oxm_offset}) since OF1.5 and v2.3.
+     * OXM: OXM_OF_${field_name.upper()}(${base_oxm_offset}) since OF1.4 and v2.3.
      */
     MFF_${field_name.upper()},
 //::      base_oxm_offset += 1
@@ -65,7 +65,7 @@
      * Prerequisites: none.
      * Access: read/write.
      * NXM: none.
-     * OXM: OXM_OF_${header_name.upper()}_VALID(${base_oxm_offset}) since OF1.5 and v2.3.
+     * OXM: OXM_OF_${header_name.upper()}_VALID(${base_oxm_offset}) since OF1.4 and v2.3.
      */
     MFF_${header_name.upper()}_VALID,
 //::      base_oxm_offset += 1
