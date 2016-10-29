@@ -37,6 +37,7 @@
     OVS_CALC_FIELD_ATTR_${field_name.upper()}, \
 //::    #endfor
 //::  #endfor
+    OVS_CALC_FIELD_ATTR_NUMBER, \
     \
 
 #endif	/* OVS_ACTION_OPENVSWITCH_H */
