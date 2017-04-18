@@ -1105,6 +1105,7 @@ def render_dict_populate_registers(render_dict, hlir):
             t_info = render_dict["table_info"][table]
             t_info["registers"].append(name)
         elif register.binding[0] == p4.P4_STATIC:
+            table = get_table_name(register.binding[1])
             r_info["binding"] = ("static", table)
         else:
             assert(False)
