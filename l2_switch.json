@@ -1,0 +1,62 @@
+{
+"p4_flow_rules":
+{
+    "tables":
+    {
+        "smac":
+        {
+            "mac_learn":
+            {
+                "priority": 0,
+                "match": "*"
+            },
+            "_nop":
+            {
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__srcAddr=0x101112131414",
+                    "ethernet__srcAddr=0x101112131416",
+                    "ethernet__srcAddr=0x101112131418"
+                ]
+            }
+        },
+        "dmac":
+        {
+            "forward":
+            {
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__dstAddr=0x101112131415",
+                    "ethernet__dstAddr=0x101112131417",
+                    "ethernet__dstAddr=0x101112131419"
+                ]
+            },
+            "broadcast":
+            {
+                "priority": 0,
+                "match": "*"
+            }
+        },
+        "mcast_src_pruning":
+        {
+            "_nop":
+            {
+                "priority": 0,
+                "match": "*"
+            },
+            "_drop":
+            {
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__dstAddr=0x101112131415,in_port=2",
+                    "ethernet__dstAddr=0x101112131417,in_port=5",
+                    "ethernet__dstAddr=0x101112131419,in_port=6"
+                ]
+            }
+        }        
+    }
+}
+}

@@ -23,6 +23,8 @@ import shutil
 from pkg_resources import resource_string
 import json
 import cPickle as pickle
+# OVS flow rules
+import flow_rules
 
 
 def get_parser():
@@ -147,6 +149,9 @@ def main():
     smart.render_all_files(render_dict, gen_dir,
                            with_thrift = args.thrift,
                            with_plugin_list = args.plugin_list)
+
+    # Generate flow rules
+    flow_rules.render_flow_rules(h, gen_dir)
 
 if __name__ == "__main__":
     main()
