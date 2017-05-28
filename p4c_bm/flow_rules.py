@@ -26,7 +26,7 @@ def form_table_setting_str(table_id, priority, match, actions):
     table_setting = match_setting + " actions=" + actions
     return table_setting
 
-def write_table_rules(rule_file, tables, ovscmd):
+def write_table_rules(rule_file, tables, ovscmd, p4_locks):
     protocol = "--protocols="+OFPROTO
     br = "br0"
     basecmd = [ovscmd, protocol]
@@ -48,17 +48,26 @@ def write_table_rules(rule_file, tables, ovscmd):
         for action_name, settings in table.iteritems():
             # Priority string
             priority_str = "priority=%d" % (settings["priority"])
-            # Actions string // TODO(kokiy): hardcoded values here need to be fixed
-            if action_name == "mac_learn":
-                actions_str = "controller"
-            elif action_name == "broadcast":
-                actions_str = "flood"
-            elif last_table and action_name == "_nop":
-                actions_str = "deparse,output:NXM_NX_REG0[]"
-            elif action_name == "_drop":
-                actions_str = ""
-            else:
+            actions_str = settings['actions']
+            if actions_str == 'resubmit':
                 actions_str = "resubmit(,%d)" % (i+1)
+#
+#            if action_name == "mac_learn":
+#                actions_str = "controller"
+#            elif action_name == "broadcast":
+#                actions_str = "flood"
+#            elif last_table and action_name == "_nop":
+#                actions_str = "deparse,output:NXM_NX_REG0[]"
+#            elif action_name == "_drop":
+#                actions_str = ""
+#            else:
+#                actions_str = "resubmit(,%d)" % (i+1)
+            # Add P4 action locks
+            if 'lock' in settings:
+                lock_name = settings['lock']
+                lock_index = p4_locks.index(lock_name)
+                lock_prim, unlock_prim = 'lock:%d' % lock_index, 'unlock:%d' % lock_index
+                actions_str = lock_prim + ',' + actions_str + ',' + unlock_prim
             # Match condition string
             if settings["match"] == MATCH_ALL:
                 match_str = None
@@ -77,12 +86,12 @@ def write_table_rules(rule_file, tables, ovscmd):
         rule_file.write(" ".join(rule) + "\n")
         
 
-def write_flow_rules_to_file(gen_dir, tables):
+def write_flow_rules_to_file(gen_dir, tables, p4_locks):
     filepath = gen_dir+"/"+P4_FILE+"_gen.sh"
     with open(filepath, "wb") as rule_file:
         write_exec_path(rule_file)
         ovscmd = write_ofctl_dir_path(rule_file)
-        write_table_rules(rule_file, tables, ovscmd)
+        write_table_rules(rule_file, tables, ovscmd, p4_locks)
 
 def populate_flow_tables(hlir, rule_args):
     tables = []
@@ -110,5 +119,6 @@ def render_flow_rules(hlir, gen_dir):
         rule_args = json.load(arg_file)["p4_flow_rules"]
     
     tables = populate_flow_tables(hlir, rule_args)
+    p4_locks = rule_args['locks']
     # For now, we only support custom table arguments
-    write_flow_rules_to_file(gen_dir, tables)
+    write_flow_rules_to_file(gen_dir, tables, p4_locks)
