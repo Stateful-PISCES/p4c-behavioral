@@ -186,14 +186,13 @@
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 /* -- Note: The following needs to be changed to support custom P4 registers. -- */
-#define OVS_REGISTER_IDX 7
 #define OVS_COMPOSE_REGISTER_READ_CASES \
-    memcpy(value, &(flow->regs[OVS_REGISTER_IDX]), sizeof(uint32_t)); \
+    memcpy(value, &(stateful_regs[idx]), sizeof(uint32_t)); \
     mf_set_flow_value_masked(mf, value, mask, flow);
 
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_COMPOSE_REGISTER_WRITE_CASES \
-    memcpy(&(flow->regs[OVS_REGISTER_IDX]), value, sizeof(uint32_t));
+    memcpy(&(stateful_regs[idx]), value, sizeof(uint32_t));
 
 #endif	/* OVS_ACTION_OFPROTO_DPIF_XLATE_H */
