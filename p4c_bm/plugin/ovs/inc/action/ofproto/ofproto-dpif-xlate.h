@@ -204,8 +204,8 @@
 //::    #endif
 //::    if reg_info["lock"]:
 //::      # Create register locks
-    struct ovs_mutex p4_reg_${reg_name.upper()}_LOCKS[${instance_count}]; \
-    for (int i = 0; i < ${instance_count}; i++) ovs_mutex_init(&(p4_reg_${reg_name.upper()}_LOCKS[i])); \
+    struct ovs_rwlock p4_reg_${reg_name.upper()}_LOCKS[${instance_count}]; \
+    for (int i = 0; i < ${instance_count}; i++) ovs_rwlock_init(&(p4_reg_${reg_name.upper()}_LOCKS[i])); \
 //::    #endif
 //::  #endfor
     \
@@ -213,14 +213,15 @@
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_P4_ACTION_LOCKS_INIT \
 //::  for lock_name, lock_info in action_lock_info.iteritems():
-    struct ovs_mutex p4_action_lock_${lock_name.upper()} \
-    ovs_mutex_init($p4_action_lock_${lock_name.upper()}); \
+    struct ovs_mutex p4_action_lock_${lock_name.upper()}; \
+    ovs_mutex_init(&(p4_action_lock_${lock_name.upper()})); \
 //::  #endfor
     \
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_COMPOSE_P4_REGISTER_READ_CASES \
 //::  for reg_name, reg_info in register_info.iteritems():
+//::    pass
 //::  #endfor
     \
 
@@ -230,10 +231,18 @@
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_COMPOSE_ACTION_LOCK_LOCK_CASES \
+//::  for lock_name, lock_info in action_lock_info.iteritems():
+    case ${lock_info["index"]}: \
+        ovs_mutex_lock(&(p4_action_lock_${lock_name.upper()})); \
+//::  #endfor
     \
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_COMPOSE_ACTION_LOCK_UNLOCK_CASES \
+//::  for lock_name, lock_info in action_lock_info.iteritems():
+    case ${lock_info["index"]}: \
+        ovs_mutex_unlock(&(p4_action_lock_${lock_name.upper()})); \
+//::  #endfor
     \
 
 
