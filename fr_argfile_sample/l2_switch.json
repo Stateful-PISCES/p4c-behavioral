@@ -1,0 +1,80 @@
+{
+"p4_flow_rules":
+{
+    "registers":
+    {
+        "my_regsiter":
+        {
+            "lock": true
+        }
+    },
+    "locks":
+    [
+        "mac_learn_lock"
+    ],
+    "tables":
+    {
+        "smac":
+        {
+            "mac_learn":
+            {
+                "actions": "controller",
+                "priority": 0,
+                "match": "*"
+            },
+            "_nop":
+            {
+                "actions": "resubmit",
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__srcAddr=0x101112131414",
+                    "ethernet__srcAddr=0x101112131416",
+                    "ethernet__srcAddr=0x101112131418"
+                ],
+                "lock": "mac_learn_lock"
+            }
+        },
+        "dmac":
+        {
+            "forward":
+            {
+                "actions": "resubmit",
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__dstAddr=0x101112131415",
+                    "ethernet__dstAddr=0x101112131417",
+                    "ethernet__dstAddr=0x101112131419"
+                ]
+            },
+            "broadcast":
+            {
+                "actions": "flood",
+                "priority": 0,
+                "match": "*"
+            }
+        },
+        "mcast_src_pruning":
+        {
+            "_nop":
+            {
+                "actions": "deparse,output:NXM_NX_REG0[]",
+                "priority": 0,
+                "match": "*"
+            },
+            "_drop":
+            {
+                "actions": "",
+                "priority": 32768,
+                "match":
+                [
+                    "ethernet__dstAddr=0x101112131415,in_port=2",
+                    "ethernet__dstAddr=0x101112131417,in_port=5",
+                    "ethernet__dstAddr=0x101112131419,in_port=6"
+                ]
+            }
+        }        
+    }
+}
+}
