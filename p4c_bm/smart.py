@@ -1086,7 +1086,7 @@ def render_dict_populate_meters(render_dict, hlir):
         meter_info[name] = m_info
     render_dict["meter_info"] = meter_info
 
-def render_dict_populate_registers(render_dict, hlir):
+def render_dict_populate_registers(render_dict, hlir, fr_argfile):
     register_info = {}
     for name, register in hlir.p4_registers.items():
         r_info = {}
@@ -1112,8 +1112,31 @@ def render_dict_populate_registers(render_dict, hlir):
 
         r_info["instance_count"] = register.instance_count
 
+        # @OVS: check for register locks
+        if fr_argfile is not None:
+            fr_p4_regs = fr_argfile['registers']
+            if name not in fr_p4_regs:
+                print("P4 register %s not defined in flow rule argument file." % name)
+                assert(False)
+            cur_fr_p4_reg = fr_p4_regs[name]
+            if 'lock' in cur_fr_p4_reg and cur_fr_p4_reg['lock'] == True:
+                r_info["lock"] = True
+            else:
+                r_info["lock"] = False
+
         register_info[name] = r_info
     render_dict["register_info"] = register_info
+
+# @OVS:
+def render_dict_populate_action_locks(render_dict, fr_argfile):
+    if fr_argfile is None: return
+    fr_locks = fr_argfile["locks"]
+    action_lock_info = {}
+    for i, lock_name in enumerate(fr_locks):
+        l_info = {}
+        l_info["index"] = i
+        action_lock_info[lock_name] = l_info
+    render_dict["action_lock_info"] = action_lock_info
 
 # @OVS:
 def render_dict_align_fields(render_dict):
@@ -1216,6 +1239,7 @@ def render_dict_create(hlir,
                        p4_name, p4_prefix,
                        meta_config,
                        public_inc_path,
+                       fr_argfile,
                        dump_yaml = False):
     render_dict = {}
 
@@ -1244,7 +1268,10 @@ def render_dict_create(hlir,
     render_dict_populate_field_list_calculations(render_dict, hlir)
     render_dict_populate_counters(render_dict, hlir)
     render_dict_populate_meters(render_dict, hlir)
-    render_dict_populate_registers(render_dict, hlir)
+    # @OVS: passing in fr_argfile for generating register locks
+    render_dict_populate_registers(render_dict, hlir, fr_argfile)
+    # @OVS: render action locks
+    render_dict_populate_action_locks(render_dict, fr_argfile)
 
     # @OVS:
     render_dict_align_fields(render_dict)

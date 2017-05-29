@@ -62,6 +62,8 @@ def get_parser():
                         help="list of plugins to generate templates")
     parser.add_argument('--openflow-mapping-dir', help="Directory of openflow mapping files")
     parser.add_argument('--openflow-mapping-mod', help="Openflow mapping module name -- not a file name")
+    parser.add_argument('--flow-rules-argfile', dest='flow_rules_argfile',
+                        help="Argument file for generating custom flow rules.")
     return parser
 
 def _get_p4_basename(p4_source):
@@ -128,10 +130,17 @@ def main():
 
     print "Generating files in directory", gen_dir
 
+    # @OVS: passing in fr_argfile for generating register locks
+    if args.flow_rules_argfile is not None:
+        fr_argfile = open(args.flow_rules_argfile, "r")
+        fr_argfile = json.load(fr_argfile)["p4_flow_rules"]
+    else:
+        fr_argfile = None
     render_dict = smart.render_dict_create(h, 
                                            p4_name, p4_prefix,
                                            args.meta_config,
                                            args.public_inc_path,
+                                           fr_argfile,
                                            dump_yaml = args.dump_yaml)
 
     # @OVS: dumps the render dict for flow_type_checker.py
@@ -151,7 +160,8 @@ def main():
                            with_plugin_list = args.plugin_list)
 
     # Generate flow rules
-    flow_rules.render_flow_rules(h, gen_dir)
+    if args.flow_rules_argfile is not None:
+        flow_rules.render_flow_rules(h, gen_dir, args.flow_rules_argfile)
 
 if __name__ == "__main__":
     main()

@@ -113,8 +113,8 @@ def populate_flow_tables(hlir, rule_args):
                             tables.append((right_subnode.name, table_args[right_subnode.name]))
     return tables
 
-def render_flow_rules(hlir, gen_dir):
-    with open(P4_FILE+".json") as arg_file:
+def render_flow_rules(hlir, gen_dir, fr_filepath):
+    with open(fr_filepath) as arg_file:
         # Peel the outmost layer
         rule_args = json.load(arg_file)["p4_flow_rules"]
     
