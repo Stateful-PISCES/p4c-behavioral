@@ -22,6 +22,8 @@
 #ifndef OVS_ACTION_OFPROTO_DPIF_XLATE_H
 #define	OVS_ACTION_OFPROTO_DPIF_XLATE_H 1
 
+#include "ovs-thread.h"  // For P4 register locks and action locks
+
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_ACTION_HELPER_FUNCS \
     \
@@ -183,5 +185,56 @@
         break; \
 //::  #endfor
     \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_P4_REGISTER_INIT \
+//::  for reg_name, reg_info in register_info.iteritems():
+//::    instance_count, width = reg_info["instance_count"], reg_info["width"]
+//::    if width == 8:
+    uint8_t *p4_reg_${reg_name.upper()} = xzalloc_cacheline(${width * instance_count}); \
+//::    elif width == 16:
+    uint16_t *p4_reg_${reg_name.upper()} = xzalloc_cacheline(${width * instance_count}); \
+//::    elif width == 32:
+    uint32_t *p4_reg_${reg_name.upper()} = xzalloc_cacheline(${width * instance_count}); \
+//::    elif width == 64:
+    uint64_t *p4_reg_${reg_name.upper()} = xzalloc_cacheline(${width * instance_count}); \
+//::    else:
+//::      # Custom size not yet supported
+//::      pass
+//::    #endif
+//::    if reg_info["lock"]:
+//::      # Create register locks
+    struct ovs_mutex p4_reg_${reg_name.upper()}_LOCKS[${instance_count}]; \
+    for (int i = 0; i < ${instance_count}; i++) ovs_mutex_init(&(p4_reg_${reg_name.upper()}_LOCKS[i])); \
+//::    #endif
+//::  #endfor
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_P4_ACTION_LOCKS_INIT \
+//::  for lock_name, lock_info in action_lock_info.iteritems():
+    struct ovs_mutex p4_action_lock_${lock_name.upper()} \
+    ovs_mutex_init($p4_action_lock_${lock_name.upper()}); \
+//::  #endfor
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_COMPOSE_P4_REGISTER_READ_CASES \
+//::  for reg_name, reg_info in register_info.iteritems():
+//::  #endfor
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_COMPOSE_P4_REGISTER_WRITE_CASES \
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_COMPOSE_ACTION_LOCK_LOCK_CASES \
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_COMPOSE_ACTION_LOCK_UNLOCK_CASES \
+    \
+
 
 #endif	/* OVS_ACTION_OFPROTO_DPIF_XLATE_H */
