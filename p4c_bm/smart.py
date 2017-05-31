@@ -1129,13 +1129,13 @@ def render_dict_populate_registers(render_dict, hlir, fr_argfile):
 
 # @OVS:
 def render_dict_populate_action_locks(render_dict, fr_argfile):
-    if fr_argfile is None: return
-    fr_locks = fr_argfile["locks"]
     action_lock_info = {}
-    for i, lock_name in enumerate(fr_locks):
-        l_info = {}
-        l_info["index"] = i
-        action_lock_info[lock_name] = l_info
+    if fr_argfile is not None:
+        fr_locks = fr_argfile["locks"]
+        for i, lock_name in enumerate(fr_locks):
+            l_info = {}
+            l_info["index"] = i
+            action_lock_info[lock_name] = l_info
     render_dict["action_lock_info"] = action_lock_info
 
 # @OVS:

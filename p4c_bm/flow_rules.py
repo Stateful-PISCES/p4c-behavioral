@@ -51,17 +51,6 @@ def write_table_rules(rule_file, tables, ovscmd, p4_locks):
             actions_str = settings['actions']
             if actions_str == 'resubmit':
                 actions_str = "resubmit(,%d)" % (i+1)
-#
-#            if action_name == "mac_learn":
-#                actions_str = "controller"
-#            elif action_name == "broadcast":
-#                actions_str = "flood"
-#            elif last_table and action_name == "_nop":
-#                actions_str = "deparse,output:NXM_NX_REG0[]"
-#            elif action_name == "_drop":
-#                actions_str = ""
-#            else:
-#                actions_str = "resubmit(,%d)" % (i+1)
             # Add P4 action locks
             if 'lock' in settings:
                 lock_name = settings['lock']
