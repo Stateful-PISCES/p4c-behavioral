@@ -26,7 +26,41 @@ def form_table_setting_str(table_id, priority, match, actions):
     table_setting = match_setting + " actions=" + actions
     return table_setting
 
-def write_table_rules(rule_file, tables, ovscmd, p4_locks):
+def get_actions_string(table_id, action_name, action_setting, p4_locks, p4_regs):
+    actions_list = action_setting['actions']
+    modified_actions_list = []
+    for action in actions_list:
+        # Parse register rules
+        reg_actions = action.split(":")
+        if reg_actions[0] in ['register_read', 'register_write']:
+            # Populate register action rule
+            if len(reg_actions) != 2:
+                raise "Register action %s is invalid. (reg_action:reg_name)" % action
+            reg_action, reg_name = reg_actions[0], reg_actions[1]
+            if reg_name not in p4_regs:
+                raise "Register specified in action %s is undeclared in P4 file." % action
+            reg_id = p4_regs.keys().index(reg_name)
+            action = reg_action + ':' + str(reg_id)
+        elif action == 'resubmit':
+            action = "resubmit(,%d)" % (table_id+1)
+        else:
+            # Default case, just keep it as is
+            # TODO: need to check for invalid actions
+            pass
+        modified_actions_list.append(action)
+    # Add P4 action lock
+    if 'lock' in action_setting:
+        lock_name = action_setting['lock']
+        if lock_name not in p4_locks:
+            raise "Action lock %s used in action %s is undeclared in .json file."\
+                    % (lock_name, action_name)
+        lock_index = p4_locks.index(lock_name)
+        lock_prim, unlock_prim = 'lock:%d' % lock_index, 'unlock:%d' % lock_index
+        modified_actions_list.insert(0, lock_prim)
+        modified_actions_list.append(unlock_prim)
+    return ",".join(modified_actions_list)
+
+def write_table_rules(rule_file, tables, ovscmd, p4_locks, p4_regs):
     protocol = "--protocols="+OFPROTO
     br = "br0"
     basecmd = [ovscmd, protocol]
@@ -48,15 +82,8 @@ def write_table_rules(rule_file, tables, ovscmd, p4_locks):
         for action_name, settings in table.iteritems():
             # Priority string
             priority_str = "priority=%d" % (settings["priority"])
-            actions_str = settings['actions']
-            if actions_str == 'resubmit':
-                actions_str = "resubmit(,%d)" % (i+1)
-            # Add P4 action locks
-            if 'lock' in settings:
-                lock_name = settings['lock']
-                lock_index = p4_locks.index(lock_name)
-                lock_prim, unlock_prim = 'lock:%d' % lock_index, 'unlock:%d' % lock_index
-                actions_str = lock_prim + ',' + actions_str + ',' + unlock_prim
+            actions_str = get_actions_string(i, action_name, settings,\
+                                             p4_locks, p4_regs)
             # Match condition string
             if settings["match"] == MATCH_ALL:
                 match_str = None
@@ -75,12 +102,12 @@ def write_table_rules(rule_file, tables, ovscmd, p4_locks):
         rule_file.write(" ".join(rule) + "\n")
         
 
-def write_flow_rules_to_file(gen_dir, tables, p4_locks):
+def write_flow_rules_to_file(gen_dir, tables, p4_locks, p4_regs):
     filepath = gen_dir+"/"+P4_FILE+"_gen.sh"
     with open(filepath, "wb") as rule_file:
         write_exec_path(rule_file)
         ovscmd = write_ofctl_dir_path(rule_file)
-        write_table_rules(rule_file, tables, ovscmd, p4_locks)
+        write_table_rules(rule_file, tables, ovscmd, p4_locks, p4_regs)
 
 def populate_flow_tables(hlir, rule_args):
     tables = []
@@ -110,4 +137,4 @@ def render_flow_rules(hlir, gen_dir, fr_filepath):
     tables = populate_flow_tables(hlir, rule_args)
     p4_locks = rule_args['locks']
     # For now, we only support custom table arguments
-    write_flow_rules_to_file(gen_dir, tables, p4_locks)
+    write_flow_rules_to_file(gen_dir, tables, p4_locks, hlir.p4_registers)
