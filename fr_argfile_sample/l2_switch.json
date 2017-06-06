@@ -3,7 +3,7 @@
 {
     "registers":
     {
-        "my_regsiter":
+        "my_register":
         {
             "lock": true
         }
@@ -18,13 +18,13 @@
         {
             "mac_learn":
             {
-                "actions": "controller",
+                "actions": ["controller"],
                 "priority": 0,
                 "match": "*"
             },
             "_nop":
             {
-                "actions": "resubmit",
+                "actions": ["resubmit"],
                 "priority": 32768,
                 "match":
                 [
@@ -39,7 +39,7 @@
         {
             "forward":
             {
-                "actions": "resubmit",
+                "actions": ["register_read:my_register", "resubmit"],
                 "priority": 32768,
                 "match":
                 [
@@ -50,7 +50,7 @@
             },
             "broadcast":
             {
-                "actions": "flood",
+                "actions": ["flood"],
                 "priority": 0,
                 "match": "*"
             }
@@ -59,13 +59,13 @@
         {
             "_nop":
             {
-                "actions": "deparse,output:NXM_NX_REG0[]",
+                "actions": ["deparse","output:NXM_NX_REG0[]"],
                 "priority": 0,
                 "match": "*"
             },
             "_drop":
             {
-                "actions": "",
+                "actions": [""],
                 "priority": 32768,
                 "match":
                 [

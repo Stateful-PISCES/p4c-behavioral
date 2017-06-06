@@ -187,35 +187,64 @@
     \
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
-#define OVS_P4_REGISTER_INIT \
-//::  for reg_name, reg_info in register_info.iteritems():
-//::    instance_count, width = reg_info["instance_count"], reg_info["width"]
-//::    if width == 8:
-    uint8_t *p4_reg_${reg_name.upper()} = xzalloc(${width * instance_count}); \
-//::    elif width == 16:
-    uint16_t *p4_reg_${reg_name.upper()} = xzalloc(${width * instance_count}); \
-//::    elif width == 32:
-    uint32_t *p4_reg_${reg_name.upper()} = xzalloc(${width * instance_count}); \
-//::    elif width == 64:
-    uint64_t *p4_reg_${reg_name.upper()} = xzalloc(${width * instance_count}); \
-//::    else:
-//::      # Custom size not yet supported
-//::      pass
-//::    #endif
-//::    if reg_info["lock"]:
-//::      # Create register locks
-    struct ovs_rwlock p4_reg_${reg_name.upper()}_LOCKS[${instance_count}]; \
-    for (int i = 0; i < ${instance_count}; i++) ovs_rwlock_init(&(p4_reg_${reg_name.upper()}_LOCKS[i])); \
-//::    #endif
-//::  #endfor
+#define OVS_P4_REGISTERS \
+//::  if len(register_info) > 0:
+    struct p4_registers { \
+//::    for reg_name, reg_info in register_info.iteritems():
+//::      instance_count, width = reg_info["instance_count"], reg_info["width"]
+//::      if width == 8:
+        uint8_t *p4_reg_${reg_name.upper()}[${instance_count}]; \
+//::      elif width == 16:
+        uint16_t *p4_reg_${reg_name.upper()}[${instance_count}]; \
+//::      elif width == 32:
+        uint32_t *p4_reg_${reg_name.upper()}[${instance_count}]; \
+//::      elif width == 64:
+        uint64_t *p4_reg_${reg_name.upper()}[${instance_count}]; \
+//::      else:
+//::        # Custom size not yet supported
+//::        pass
+//::      #endif
+//::      if "lock" in reg_info and reg_info["lock"]:
+//::        # Create register locks
+        struct ovs_rwlock p4_reg_${reg_name.upper()}_locks[${instance_count}]; \
+//::      #endif
+//::    #endfor
+    }; \
+//::  #endif
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_P4_ACTION_LOCKS \
+//::  if len(action_lock_info) > 0:
+    struct p4_action_locks { \
+//::    for lock_name, lock_info in action_lock_info.iteritems():
+        struct ovs_mutex p4_action_lock_${lock_name.upper()}; \
+//    ovs_mutex_init(&(p4_action_lock_${lock_name.upper()})); \
+//::    #endfor
+    }; \
+//::  #endif
+    \
+
+/* -- Called in ofproto/ofproto-dpif-xlate.c -- */
+#define OVS_P4_REGISTERS_INIT \
+//::  if len(register_info) > 0:
+//::    for reg_name, reg_info in register_info.iteritems():
+//::      instance_count= reg_info["instance_count"]
+//::      if "lock" in reg_info and reg_info["lock"]:
+    for (int i = 0; i < ${instance_count}; i++) \
+        ovs_rwlock_init(&(p4_regs->p4_reg_${reg_name.upper()}_locks[i])); \
+//::      #endif
+//::    #endfor
+//::  #endif
     \
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
 #define OVS_P4_ACTION_LOCKS_INIT \
-//::  for lock_name, lock_info in action_lock_info.iteritems():
-    struct ovs_mutex p4_action_lock_${lock_name.upper()}; \
-    ovs_mutex_init(&(p4_action_lock_${lock_name.upper()})); \
-//::  #endfor
+//::  if len(action_lock_info) > 0:
+//::    for lock_name, lock_info in action_lock_info.iteritems():
+    ovs_mutex_init(&(p4_action_locks->p4_action_lock_${lock_name.upper()})); \
+//::    #endfor
+//::  #endif
     \
 
 /* -- Called in ofproto/ofproto-dpif-xlate.c -- */
@@ -223,7 +252,10 @@
     switch(register_id) { \
 //::  for reg_name, reg_info in register_info.iteritems():
 //::    width = reg_info['width']
-        case ${register_info.keys().index(reg_name)}:
+        case ${register_info.keys().index(reg_name)}: \
+//::    if "lock" in reg_info and reg_info["lock"]:
+            ovs_rwlock_rdlock(&(p4_reg_${reg_name.upper()}_locks[idx])); \        
+//::    #endif
 //::    if width == 8:
             memcpy(value, &(p4_reg_${reg_name.upper()}[idx]), sizeof(uint8_t)); \
 //::    elif width == 16:
@@ -235,6 +267,9 @@
 //::    else:
 //::      pass  # TODO: handle this case (arbitrary size)
 //::    #endif
+//::    if "lock" in reg_info and reg_info["lock"]:
+            ovs_rwlock_unlock(&(p4_reg_${reg_name.upper()}_locks[idx])); \        
+//::    #endif
             break; \
 //::  #endfor
     } \
@@ -245,7 +280,10 @@
     switch(register_id) { \
 //::  for reg_name, reg_info in register_info.iteritems():
 //::    width = reg_info['width']
-        case ${register_info.keys().index(reg_name)}:
+        case ${register_info.keys().index(reg_name)}: \
+//::    if "lock" in reg_info and reg_info["lock"]:
+            ovs_rwlock_wrlock(&(p4_reg_${reg_name.upper()}_locks[idx])); \        
+//::    #endif
 //::    if width == 8:
             memcpy(&(p4_reg_${reg_name.upper()}[idx]), value, sizeof(uint8_t)); \
 //::    elif width == 16:
@@ -256,6 +294,9 @@
             memcpy(&(p4_reg_${reg_name.upper()}[idx]), value, sizeof(uint64_t)); \
 //::    else:
 //::      pass  # TODO: handle this case (arbitrary size)
+//::    #endif
+//::    if "lock" in reg_info and reg_info["lock"]:
+            ovs_rwlock_unlock(&(p4_reg_${reg_name.upper()}_locks[idx])); \        
 //::    #endif
             break; \
 //::  #endfor
