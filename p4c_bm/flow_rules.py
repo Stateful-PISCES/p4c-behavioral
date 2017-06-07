@@ -3,9 +3,10 @@ import p4_hlir.hlir as H
 import types
 import re
 import os
+import stat
 
 EXEC = "/bin/sh -ve"
-DIR = "~/p4-vswitch/ovs/utilities"
+DIR = "~/my-change/ovs/utilities"
 OFCTL = "/ovs-ofctl"
 OFPROTO = "OpenFlow15"
 # special char for matching all
@@ -80,7 +81,7 @@ def write_table_rules(rule_file, tables, ovscmd, p4_locks, p4_regs):
 
     table_flow_rules = []
     # Delete old rules
-    delcmd = basecmd + ["del-flow", br]
+    delcmd = basecmd + ["del-flows", br]
     table_flow_rules.append(delcmd)
 
     # Add flow rules for each table
@@ -102,13 +103,13 @@ def write_table_rules(rule_file, tables, ovscmd, p4_locks, p4_regs):
                 match_str = None
                 table_setting = form_table_setting_str(table_id_str, priority_str,\
                         match_str, actions_str)
-                table_flow_rules.append(basecmd+["add_flow",br,"\""+table_setting+"\""])
+                table_flow_rules.append(basecmd+["add-flow",br,"\""+table_setting+"\""])
             else:
                 for match_value in settings["match"]:
                     match_str = match_value    
                     table_setting = form_table_setting_str(table_id_str, priority_str,\
                         match_str, actions_str)
-                    table_flow_rules.append(basecmd+["add_flow",br,"\""+table_setting+"\""])
+                    table_flow_rules.append(basecmd+["add-flow",br,"\""+table_setting+"\""])
 
     # Populated all the table flow rules
     for rule in table_flow_rules:
@@ -121,6 +122,9 @@ def write_flow_rules_to_file(gen_dir, tables, p4_locks, p4_regs):
         write_exec_path(rule_file)
         ovscmd = write_ofctl_dir_path(rule_file)
         write_table_rules(rule_file, tables, ovscmd, p4_locks, p4_regs)
+    # Marking the file as executable
+    st = os.stat(filepath)
+    os.chmod(filepath, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 def populate_flow_tables(hlir, rule_args):
     tables = []
