@@ -1,7 +1,7 @@
 import json
 import p4_hlir.hlir as H
 import types
-
+import re
 import os
 
 EXEC = "/bin/sh -ve"
@@ -12,6 +12,8 @@ OFPROTO = "OpenFlow15"
 MATCH_ALL = "*"
 
 P4_FILE="l2_switch"
+REG_READ = 'register_read'
+REG_WRITE = 'register_write'
 
 def write_exec_path(rule_file):
     rule_file.write("#! "+EXEC+"\n\n")
@@ -31,16 +33,27 @@ def get_actions_string(table_id, action_name, action_setting, p4_locks, p4_regs)
     modified_actions_list = []
     for action in actions_list:
         # Parse register rules
-        reg_actions = action.split(":")
-        if reg_actions[0] in ['register_read', 'register_write']:
+        reg_actions = action.split(':')
+        if reg_actions[0] in [REG_READ, REG_WRITE]:
             # Populate register action rule
             if len(reg_actions) != 2:
                 raise "Register action %s is invalid. (reg_action:reg_name)" % action
-            reg_action, reg_name = reg_actions[0], reg_actions[1]
+            if reg_actions[0] == REG_READ:
+                matched = re.search(r'(.+)\[(\d+)\]->(.+)', reg_actions[1])
+                reg_name, idx, field_name = matched.group(1), matched.group(2), matched.group(3)
+            elif reg_actions[0] == REG_WRITE:
+                matched = re.search(r'(\d+)->(.+)\[(\d+)\]', reg_actions[1])
+                value, reg_name, idx = matched.group(1), matched.group(2), matched.group(3)
+            else:
+                raise "Unknown register action: %s" % reg_actions[0]
             if reg_name not in p4_regs:
                 raise "Register specified in action %s is undeclared in P4 file." % action
+            idx = int(idx)
             reg_id = p4_regs.keys().index(reg_name)
-            action = reg_action + ':' + str(reg_id)
+            if reg_actions[0] == REG_READ:
+                action = '%s:sreg[%d][%d]->%s' % (REG_READ, reg_id, idx, field_name)
+            elif reg_actions[0] == REG_WRITE:
+                action = '%s:%s->sreg[%d][%d]' % (REG_WRITE, value, reg_id, idx)
         elif action == 'resubmit':
             action = "resubmit(,%d)" % (table_id+1)
         else:
