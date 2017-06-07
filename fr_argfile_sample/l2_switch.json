@@ -39,7 +39,7 @@
         {
             "forward":
             {
-                "actions": ["register_read:my_register", "resubmit"],
+                "actions": ["register_read:my_register[0]->reg4", "resubmit"],
                 "priority": 32768,
                 "match":
                 [
