@@ -28,9 +28,8 @@
                 "priority": 32768,
                 "match":
                 [
-                    "ethernet__srcAddr=0x101112131414",
-                    "ethernet__srcAddr=0x101112131416",
-                    "ethernet__srcAddr=0x101112131418"
+                    "ethernet__srcAddr=0x08002715b411",
+                    "ethernet__srcAddr=0x0800277e0b95"
                 ],
                 "lock": "mac_learn_lock"
             }
@@ -43,9 +42,8 @@
                 "priority": 32768,
                 "match":
                 [
-                    "ethernet__dstAddr=0x101112131415",
-                    "ethernet__dstAddr=0x101112131417",
-                    "ethernet__dstAddr=0x101112131419"
+                    "ethernet__dstAddr=0x08002715b411",
+                    "ethernet__dstAddr=0x0800277e0b95"
                 ]
             },
             "broadcast":
@@ -59,7 +57,7 @@
         {
             "_nop":
             {
-                "actions": ["deparse","output:NXM_NX_REG0[]"],
+                "actions": ["deparse","output:2"],
                 "priority": 0,
                 "match": "*"
             },
@@ -69,9 +67,8 @@
                 "priority": 32768,
                 "match":
                 [
-                    "ethernet__dstAddr=0x101112131415,in_port=2",
-                    "ethernet__dstAddr=0x101112131417,in_port=5",
-                    "ethernet__dstAddr=0x101112131419,in_port=6"
+                    "ethernet__dstAddr=0x08002715b411,in_port=1",
+                    "ethernet__dstAddr=0x0800277e0b95,in_port=2"
                 ]
             }
         }        
