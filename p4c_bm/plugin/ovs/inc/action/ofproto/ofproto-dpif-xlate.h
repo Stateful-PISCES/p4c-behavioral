@@ -258,6 +258,7 @@
 //::    else:
 //::      pass  # TODO: handle this case (arbitrary size)
 //::    #endif
+            register_field = &(p4_regs->p4_reg_${reg_name.upper()}[idx]); \
 //::    if "lock" in reg_info and reg_info["lock"]:
             ovs_rwlock_unlock(&(p4_regs->p4_reg_${reg_name.upper()}_locks[idx])); \
 //::    #endif
@@ -288,6 +289,7 @@
 //::    else:
 //::      pass  # TODO: handle this case (arbitrary size)
 //::    #endif
+            register_field = &(p4_regs->p4_reg_${reg_name.upper()}[idx]); \
 //::    if "lock" in reg_info and reg_info["lock"]:
             ovs_rwlock_unlock(&(p4_regs->p4_reg_${reg_name.upper()}_locks[idx])); \
 //::    #endif

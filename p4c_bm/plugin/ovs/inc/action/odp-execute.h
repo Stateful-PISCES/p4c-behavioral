@@ -279,4 +279,52 @@ pop: \
 //::  #endif
     \
 
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_REGISTER_READ \
+    switch(register_id) { \
+//::  for reg_name, reg_info in register_info.iteritems():
+//::    width = reg_info['width']
+        case ${register_info.keys().index(reg_name)}: \
+//::    if width == 8:
+            memcpy(value, register_field, sizeof(uint8_t)); \
+//::    elif width == 16:
+            memcpy(value, register_field, sizeof(uint16_t)); \
+//::    elif width == 32:
+            memcpy(value, register_field, sizeof(uint32_t)); \
+//::    elif width == 64:
+            memcpy(value, register_field, sizeof(uint64_t)); \
+//::    else:
+//::      pass  # TODO: handle this case (arbitrary size)
+//::    #endif
+            break; \
+//::  #endfor
+        default: \
+            break; \
+    } \ 
+    \   
+
+/* -- Called in lib/odp-execute.c -- */
+#define OVS_ODP_EXECUTE_REGISTER_WRITE \
+    switch(register_id) { \
+//::  for reg_name, reg_info in register_info.iteritems():
+//::    width = reg_info['width']
+        case ${register_info.keys().index(reg_name)}: \
+//::    if width == 8:
+            memcpy(register_field, value, sizeof(uint8_t)); \
+//::    elif width == 16:
+            memcpy(register_field, value, sizeof(uint16_t)); \
+//::    elif width == 32:
+            memcpy(register_field, value, sizeof(uint32_t)); \
+//::    elif width == 64:
+            memcpy(register_field, value, sizeof(uint64_t)); \
+//::    else:
+//::      pass  # TODO: handle this case (arbitrary size)
+//::    #endif
+            break; \
+//::  #endfor
+        default: \
+            break; \
+    } \ 
+    \   
+
 #endif	/* OVS_ACTION_ODP_EXECUTE_H */
